@@ -109,9 +109,11 @@ function __()
  * @param string $srcSep
  * @return string
  */
-function uc_words($str, $destSep='_', $srcSep='_')
-{
-    return str_replace(' ', $destSep, ucwords(str_replace($srcSep, ' ', $str)));
+if (!function_exists('uc_words')) {
+    function uc_words($str, $destSep = '_', $srcSep = '_')
+    {
+        return str_replace(' ', $destSep, ucwords(str_replace($srcSep, ' ', $str)));
+    }
 }
 
 /**
@@ -120,11 +122,12 @@ function uc_words($str, $destSep='_', $srcSep='_')
  * @param string $format
  * @return string
  */
-function now($dayOnly=false)
-{
-    return date($dayOnly ? 'Y-m-d' : 'Y-m-d H:i:s');
+if (!function_exists('now')) {
+    function now($dayOnly = false)
+    {
+        return date($dayOnly ? 'Y-m-d' : 'Y-m-d H:i:s');
+    }
 }
-
 /**
  * Check whether sql date is empty
  *
@@ -136,22 +139,24 @@ function is_empty_date($date)
     return preg_replace('#[ 0:-]#', '', $date)==='';
 }
 
-function mageFindClassFile($class)
-{
-    if (defined('COMPILER_INCLUDE_PATH')) {
-        $classFile = $class.'.php';
-    } else {
-        $classFile = uc_words($class, DIRECTORY_SEPARATOR).'.php';
-    }
-    $found = false;
-    foreach (explode(PS, get_include_path()) as $path) {
-        $fileName = $path.DS.$classFile;
-        if (file_exists($fileName)) {
-            $found = $fileName;
-            break;
+if (!function_exists('mageFindClassFile')) {
+    function mageFindClassFile($class)
+    {
+        if (defined('COMPILER_INCLUDE_PATH')) {
+            $classFile = $class . '.php';
+        } else {
+            $classFile = uc_words($class, DIRECTORY_SEPARATOR) . '.php';
         }
+        $found = false;
+        foreach (explode(PS, get_include_path()) as $path) {
+            $fileName = $path . DS . $classFile;
+            if (file_exists($fileName)) {
+                $found = $fileName;
+                break;
+            }
+        }
+        return $found;
     }
-    return $found;
 }
 
 /**
@@ -162,104 +167,107 @@ function mageFindClassFile($class)
  * @param string $errfile
  * @param integer $errline
  */
-function mageCoreErrorHandler($errno, $errstr, $errfile, $errline){
-    if (strpos($errstr, 'DateTimeZone::__construct')!==false) {
-        // there's no way to distinguish between caught system exceptions and warnings
-        return false;
-    }
+if (!function_exists('mageCoreErrorHandler')) {
+    function mageCoreErrorHandler($errno, $errstr, $errfile, $errline)
+    {
+        if (strpos($errstr, 'DateTimeZone::__construct') !== false) {
+            // there's no way to distinguish between caught system exceptions and warnings
+            return false;
+        }
 
-    $errno = $errno & error_reporting();
-    if ($errno == 0) {
-        return false;
-    }
-    if (!defined('E_STRICT')) {
-        define('E_STRICT', 2048);
-    }
-    if (!defined('E_RECOVERABLE_ERROR')) {
-        define('E_RECOVERABLE_ERROR', 4096);
-    }
-    if (!defined('E_DEPRECATED')) {
-        define('E_DEPRECATED', 8192);
-    }
+        $errno = $errno & error_reporting();
+        if ($errno == 0) {
+            return false;
+        }
+        if (!defined('E_STRICT')) {
+            define('E_STRICT', 2048);
+        }
+        if (!defined('E_RECOVERABLE_ERROR')) {
+            define('E_RECOVERABLE_ERROR', 4096);
+        }
+        if (!defined('E_DEPRECATED')) {
+            define('E_DEPRECATED', 8192);
+        }
 
-    /**
-     * PHP 7.2 fix.
-     * Suppress all deprecation notices on PHP 7.2
-     */
-    /*
-    if ($errno == E_DEPRECATED &&  && version_compare(PHP_VERSION, '7.2.0', '>=')) {
-        return true;
-    }
-    */
-    //
-
-    // PEAR specific message handling
-    if (stripos($errfile.$errstr, 'pear') !== false) {
-         // ignore strict and deprecated notices
-        if (($errno == E_STRICT) || ($errno == E_DEPRECATED)) {
+        /**
+         * PHP 7.2 fix.
+         * Suppress all deprecation notices on PHP 7.2
+         */
+        /*
+        if ($errno == E_DEPRECATED &&  && version_compare(PHP_VERSION, '7.2.0', '>=')) {
             return true;
         }
-        // ignore attempts to read system files when open_basedir is set
-        if ($errno == E_WARNING && stripos($errstr, 'open_basedir') !== false) {
-            return true;
+        */
+        //
+
+        // PEAR specific message handling
+        if (stripos($errfile . $errstr, 'pear') !== false) {
+            // ignore strict and deprecated notices
+            if (($errno == E_STRICT) || ($errno == E_DEPRECATED)) {
+                return true;
+            }
+            // ignore attempts to read system files when open_basedir is set
+            if ($errno == E_WARNING && stripos($errstr, 'open_basedir') !== false) {
+                return true;
+            }
         }
-    }
 
-    $errorMessage = '';
+        $errorMessage = '';
 
-    switch($errno){
-        case E_ERROR:
-            $errorMessage .= "Error";
-            break;
-        case E_WARNING:
-            $errorMessage .= "Warning";
-            break;
-        case E_PARSE:
-            $errorMessage .= "Parse Error";
-            break;
-        case E_NOTICE:
-            $errorMessage .= "Notice";
-            break;
-        case E_CORE_ERROR:
-            $errorMessage .= "Core Error";
-            break;
-        case E_CORE_WARNING:
-            $errorMessage .= "Core Warning";
-            break;
-        case E_COMPILE_ERROR:
-            $errorMessage .= "Compile Error";
-            break;
-        case E_COMPILE_WARNING:
-            $errorMessage .= "Compile Warning";
-            break;
-        case E_USER_ERROR:
-            $errorMessage .= "User Error";
-            break;
-        case E_USER_WARNING:
-            $errorMessage .= "User Warning";
-            break;
-        case E_USER_NOTICE:
-            $errorMessage .= "User Notice";
-            break;
-        case E_STRICT:
-            $errorMessage .= "Strict Notice";
-            break;
-        case E_RECOVERABLE_ERROR:
-            $errorMessage .= "Recoverable Error";
-            break;
-        case E_DEPRECATED:
-            $errorMessage .= "Deprecated functionality";
-            break;
-        default:
-            $errorMessage .= "Unknown error ($errno)";
-            break;
-    }
+        switch ($errno) {
+            case E_ERROR:
+                $errorMessage .= "Error";
+                break;
+            case E_WARNING:
+                $errorMessage .= "Warning";
+                break;
+            case E_PARSE:
+                $errorMessage .= "Parse Error";
+                break;
+            case E_NOTICE:
+                $errorMessage .= "Notice";
+                break;
+            case E_CORE_ERROR:
+                $errorMessage .= "Core Error";
+                break;
+            case E_CORE_WARNING:
+                $errorMessage .= "Core Warning";
+                break;
+            case E_COMPILE_ERROR:
+                $errorMessage .= "Compile Error";
+                break;
+            case E_COMPILE_WARNING:
+                $errorMessage .= "Compile Warning";
+                break;
+            case E_USER_ERROR:
+                $errorMessage .= "User Error";
+                break;
+            case E_USER_WARNING:
+                $errorMessage .= "User Warning";
+                break;
+            case E_USER_NOTICE:
+                $errorMessage .= "User Notice";
+                break;
+            case E_STRICT:
+                $errorMessage .= "Strict Notice";
+                break;
+            case E_RECOVERABLE_ERROR:
+                $errorMessage .= "Recoverable Error";
+                break;
+            case E_DEPRECATED:
+                $errorMessage .= "Deprecated functionality";
+                break;
+            default:
+                $errorMessage .= "Unknown error ($errno)";
+                break;
+        }
 
-    $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
-    if (Mage::getIsDeveloperMode()) {
-        throw new Exception($errorMessage);
-    } else {
-        Mage::log($errorMessage, Zend_Log::ERR);
+        $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
+        if (Mage::getIsDeveloperMode()) {
+            throw new Exception($errorMessage);
+        } else {
+            Mage::log($errorMessage, Zend_Log::ERR);
+        }
     }
 }
 
@@ -343,25 +351,27 @@ function mageParseCsv($string, $delimiter=",", $enclosure='"', $escape='\\')
     return $elements;
 }
 
-function is_dir_writeable($dir)
-{
-    if (is_dir($dir) && is_writable($dir)) {
-        if (stripos(PHP_OS, 'win') === 0) {
-            $dir    = ltrim($dir, DIRECTORY_SEPARATOR);
-            $file   = $dir . DIRECTORY_SEPARATOR . uniqid(mt_rand()).'.tmp';
-            $exist  = file_exists($file);
-            $fp     = @fopen($file, 'a');
-            if ($fp === false) {
-                return false;
+if (!function_exists('is_dir_writeable')) {
+    function is_dir_writeable($dir)
+    {
+        if (is_dir($dir) && is_writable($dir)) {
+            if (stripos(PHP_OS, 'win') === 0) {
+                $dir = ltrim($dir, DIRECTORY_SEPARATOR);
+                $file = $dir . DIRECTORY_SEPARATOR . uniqid(mt_rand()) . '.tmp';
+                $exist = file_exists($file);
+                $fp = @fopen($file, 'a');
+                if ($fp === false) {
+                    return false;
+                }
+                fclose($fp);
+                if (!$exist) {
+                    unlink($file);
+                }
             }
-            fclose($fp);
-            if (!$exist) {
-                unlink($file);
-            }
+            return true;
         }
-        return true;
+        return false;
     }
-    return false;
 }
 
 if ( !function_exists('sys_get_temp_dir') ) {
